@@ -1,7 +1,8 @@
 -- Hotkey definitions moved out of init.lua
 
 -- PASSATA hotkeys
-PASSATA:bindHotkeys({toggle = {{}, "F12"}})
+local PASSATA = require("lib.passata")
+PASSATA:bindHotkeys({toggle = {{}, "F12", function() PASSATA:toggle() end}})
 
 -- Modifier key constants
 HYPER = {"cmd"}               -- shorthand for CMD
@@ -36,7 +37,7 @@ HK.bind(NONE, "F2", function()
     input_pause()
     hs.eventtap.keyStroke(HYPER_RESERVED, "F2")
 end)
-HK.bind(NONE, "F3", focusIterm)
+HK.bind(NONE, "F3", function() focusIterm() end)
 HK.bind(NONE, "F4", function()
     bring_or_hide_window(get_winger_window("Chat"))
 end)
@@ -137,7 +138,7 @@ wf_transmission:subscribe(WF.windowUnfocused, function() transmissionModal:exit(
 -- Additional hotkey bindings extracted from init.lua
 HK.bind(HYPER, "h", function() hs.eventtap.keyStroke(HYPER_WINDOW, "h") end)
 -- make Firefox cmd+t global
-HK.bind(HYPER_GLOBAL, "t", new_firefox_tab)
+HK.bind(HYPER_GLOBAL, "t", BROWSER.new_firefox_tab)
 -- easy block screen
 HK.bind(HYPER_GLOBAL, "-", blackScreen)
 

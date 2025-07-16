@@ -1,6 +1,5 @@
 
 require("modules.config")
-require("modules.hotkeys")
 
 OOP_Test = {
     -- __name = USERDATA_TAG .. ".watcher",
@@ -1835,3 +1834,4 @@ spoon.SpoonInstall:andUse("FastModal", {
 
 -- disable annoying Cmd + H
 -- Additional hotkeys moved to modules/hotkeys.lua
+require("modules.hotkeys")
