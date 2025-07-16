@@ -563,58 +563,11 @@ end
 
 -- Transmission modal hotkeys moved to modules/hotkeys.lua
 
-processed_viscosity = {}
-
-function viscosity_login(window)
-    local window_id = window:id()
-    if processed_viscosity[window_id] then
-        return
-    else
-        processed_viscosity[window_id] = true
-        print(window:title())
-    end
-    local ui = hs.axuielement.windowElement(window)
-    local username = "carlos.cabrera"
-    local password = SHUTIL.shellGet("s.otp OTP_VPN")
-    for _, textField in pairs(ui:childrenWithRole("AXTextField")) do
-        if textField["AXRoleDescription"] == "text field" then
-            textField["AXValue"] = username
-        elseif textField["AXRoleDescription"] == "secure text field" then
-            textField["AXValue"] = password
-        end
-    end
-    for _, button in pairs(ui:childrenWithRole("AXButton")) do
-        if button["AXTitle"] == "OK" then button:doAXPress() end
-    end
-end
-
-local function viscosity_click_ok(window)
-    local window_id = window:id()
-    local title = window:title()
-    if title ~= "" then return end
-    if processed_viscosity[window_id] then
-        return
-    else
-        processed_viscosity[window_id] = true
-    end
-    local script = [[
-        tell application "System Events"
-            tell process "Viscosity"
-                set frontmost to true
-                click button "OK" of front window
-            end tell
-        end tell
-    ]]
-    local ok, _, _, _ = hs.osascript.applescript(script)
-end
-
-wf_viscosity_login = WF.new(false):setAppFilter('Viscosity',
-                                                {allowTitles = 'Viscosity - '})
-wf_viscosity_error = WF.new(false):setAppFilter('Viscosity')
-wf_viscosity_login:subscribe({WF.windowFocused, WF.windowCreated},
-                             viscosity_login)
 
 
+
+-- Viscosity authentication moved to modules/viscosity.lua
+require("modules.viscosity").init()
 
 function FirefoxCopySource()
     hs.eventtap.keyStroke(HYPER, "l")
