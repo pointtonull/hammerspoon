@@ -112,6 +112,7 @@ function get_info_logger(local_name, logfile)
     end
 end
 INFO_TIMER = get_info_logger("timer", "/Users/carlos.cabrera/.messages")
+require("modules.smart").init()
 
 function clock()
     local screen_frame = hs.screen.mainScreen():fullFrame()
@@ -452,41 +453,6 @@ function spotify_control(command)
     SHUTIL.shellDo(cmd, {py_env = "p3"})
 end
 
-OFFICE_STATUS = "unknown"
-function check_office_lights()
-    local info = get_info_logger("check_office_lights",
-                                 "/Users/carlos.cabrera/.messages")
-    local threshold = 60 * 30 --  30 minutes
-
-    local hour = tonumber(os.date("%H"))
-    local idleTime = hs.host.idleTime()
-
-    local isDark = hour >= 18 or hour < 5
-    local isActive = idleTime < threshold
-
-    if isDark and isActive then
-        if OFFICE_STATUS ~= "on" then
-            info("turning office lights on")
-            SHUTIL.shellDo("s.log meross office on&", {py_env = "p3"})
-            OFFICE_STATUS = "on"
-        end
-    else
-        if OFFICE_STATUS ~= "off" then
-            info("turning office lights off")
-            SHUTIL.shellDo("meross office off&", {py_env = "p3"})
-            OFFICE_STATUS = "off"
-        end
-    end
-end
-if hs.host.localizedName() == "macbook’s MacBook Pro" then
-    TIMER_OFFICE_LIGHTS = hs.timer.doEvery(60 * 10, function()
-        INFO_TIMER("check_office_lights")
-        check_office_lights()
-    end, true)
-    CAFFEINATE_WATCHER_OFFICE_LIGHTS = hs.caffeinate.watcher.new(function(event)
-        check_office_lights()
-    end):start()
-end
 
 function nearly_equal(a, b, epsilon)
     epsilon = epsilon or 0.0001
