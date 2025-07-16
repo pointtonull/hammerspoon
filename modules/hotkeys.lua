@@ -2,6 +2,7 @@
 
 -- PASSATA hotkeys
 local PASSATA = require("lib.passata")
+local OTP = require("modules.otp")
 PASSATA:bindHotkeys({toggle = {{}, "F12", function() PASSATA:toggle() end}})
 
 -- Modifier key constants

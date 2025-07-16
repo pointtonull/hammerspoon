@@ -1,5 +1,6 @@
 -- AWS credentials and export functions moved from init.lua
 local M = {}
+local OTP = require("modules.otp")
 
 --- Retrieve AWS credentials via Okta automation
 function M.get_aws_credentials()
@@ -51,7 +52,7 @@ function M.get_aws_credentials()
 
     local function onOTP()
         status("✅ otp")
-        type_otp("OTP_OKTA")
+        OTP.type_otp("OTP_OKTA")
         hs.timer.doAfter(5, onMyAPPs)
     end
 

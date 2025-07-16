@@ -32,31 +32,8 @@ OOP_Test = {
 
 
 
-require("modules.smart").init()
-
-
-PASSATA = require("lib.passata")
-PASSATA:init()
-PASSATA.seconds_by_mode["working"] = 20 * 60
-PASSATA.seconds_by_mode["resting"] = 5 * 60
-PASSATA.seconds_by_mode["idle"] = 5 * 60
-PASSATA.logActivityInterval = 0
--- PASSATA.nudge = WORK
-PASSATA.nudge = false
-PASSATA.nagg = false
-PASSATA:start()
-
-PASSATA.triggers["on_complete_work"] = {peek_report}
--- PASSATA.triggers["on_start_work"] = {
---     -- function() spoon.Split:assureFocused() end,
---     function() hs.screen.setForceToGray(false) end
--- }
--- PASSATA.triggers["on_interrupt_work"]= {hs.spotify.stop}
-PASSATA.triggers["on_complete_rest"] = {peek_report}
-PASSATA.triggers["on_task_reminder"] = {function() peek_report(0.25) end}
-PASSATA.triggers["on_nagg"] = {gray_minute}
-PASSATA.triggers["on_draw_report"] = {customizeReport}
--- PASSATA:bindHotkeys moved to modules/hotkeys.lua
+	require("modules.smart").init()
+	require("modules.passata").init()
 
 CONSOLE = require("lib.console")
 CONSOLE:init()
@@ -1127,35 +1104,6 @@ function todoWindow(options)
     end
 end
 
-function type_otp(name)
-    otp = SHUTIL.shellGet("s.otp " .. name)
-    hs.eventtap.keyStrokes(otp)
-    hs.eventtap.keyStroke(NONE, "Return")
-end
-
-function split_lines(str)
-    local t = {}
-    for line in str:gmatch("([^\n]*)\n?") do table.insert(t, line) end
-    return t
-end
-
-function get_otp_names()
-    local cmd = "awk -F'[_ =]' '/OTP/{print $3}' ~/.tokens"
-    local otp_names = split_lines(SHUTIL.shellGet(cmd))
-    return otp_names
-end
-
-function choose_otp()
-    local chooser = hs.chooser.new(function(result)
-        if result ~= nil then type_otp("OTP_" .. result.text) end
-    end)
-    chooser:searchSubText(true)
-    local names = get_otp_names()
-    local options = hs.fnutils.map(names,
-                                   function(name) return {text = name} end)
-    chooser:choices(options)
-    chooser:show()
-end
 
 local RB_Firefox = {
     [RB.singleKey('f', 'Firefox')] = function() focus_app("Firefox") end,
@@ -1367,6 +1315,8 @@ hs.loadSpoon("Split")
 hs.loadSpoon("EasyMove")
 hs.loadSpoon("Queue")
 
+OTP = require("modules.otp")
+
 spoon.SpoonInstall:andUse("FastModal", {
     config = {
         mappings = {
@@ -1375,7 +1325,7 @@ spoon.SpoonInstall:andUse("FastModal", {
             f = {"Firefox", RB_Firefox},
             i = {"iTerm", focusIterm},
             m = {"Spotify", function() focus_and_show("Spotify") end},
-            o = {"OTP", choose_otp},
+			    o = {"OTP", OTP.choose_otp},
             s = {"Slack", function() focus_app("Slack") end},
             t = {
                 "Teams", {
@@ -1399,4 +1349,4 @@ spoon.SpoonInstall:andUse("FastModal", {
 
 -- disable annoying Cmd + H
 -- Additional hotkeys moved to modules/hotkeys.lua
-require("modules.hotkeys")
+	require("modules.hotkeys")
