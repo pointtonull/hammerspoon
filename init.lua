@@ -504,6 +504,8 @@ end
 
 -- Viscosity authentication moved to modules/viscosity.lua
 require("modules.viscosity").init()
+-- window management functions moved to modules/window.lua
+require("modules.window")
 
 function FirefoxCopySource()
     hs.eventtap.keyStroke(HYPER, "l")
