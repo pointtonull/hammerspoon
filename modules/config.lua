@@ -21,6 +21,7 @@ LIBWINDOW = require("hs.libwindow")
 SHUTIL = require("lib.shutil")
 STATUS = require("lib.status")
 BROWSER = require("lib.browser")
+AWS = require("modules.aws")
 
 LOGGER = hs.logger.new("main", "info")
 
