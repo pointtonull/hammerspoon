@@ -129,66 +129,6 @@ end
 -- start - if true, call the Spoon's start() method after configuring
 --   everything else.
 
-function truncate(str, options)
-    options = options or {}
-    local maxLength = options.maxLength or 80
-    local leftPadd = options.leftPadd or 0
-    local elipsis = options.elipsis or ".."
-    if #str > maxLength then
-        str = str:sub(1, maxLength - #elipsis) .. elipsis
-    else
-        if #str < leftPadd then
-            local padding = string.rep(" ", leftPadd - #str)
-            str = padding .. str
-        end
-    end
-    return str
-end
-
-function inspect(obj, options)
-    -- similar to hs.inspect, but this one goes into userdata objects
-    options = options or {}
-    local indent = options.indent or 0
-    local root = options.root or "root"
-    local recurse = options.recurse == nil and true or false
-    local limit = options.limit
-    local tempTable = {}
-    local obj_type = type(obj)
-    local function lprint(message, ...)
-        hs.printf(string.rep(" ", indent) .. message, ...)
-    end
-    if obj_type == "userdata" then
-        table_to_inspect = getmetatable(obj)
-        obj_type = string.format("%s %s", obj_type, obj)
-        recurse = false -- to prevent infinite recursion
-    elseif obj_type == "table" then
-        table_to_inspect = obj
-    else
-        lprint("%s: <%s> %s", root, obj_type, hs.inspect(obj))
-        return
-    end
-    lprint("%s: <%s>", root, obj_type)
-    for key, value in pairs(table_to_inspect) do
-        tempTable[#tempTable + 1] = {key = key, value = value}
-    end
-    table.sort(tempTable,
-               function(a, b) return tostring(a.key) < tostring(b.key) end)
-    for pos, pair in ipairs(tempTable) do
-        if limit and pos > limit then
-            lprint("    ..")
-            break
-        end
-        if recurse then
-            inspect(pair.value, {
-                indent = indent + 4,
-                limit = limit == nil and 20 or limit // 2,
-                root = pair.key
-            })
-        else
-            lprint("    %s: %s", pair.key, pair.value)
-        end
-    end
-end
 
 function edit_text()
     local original = hs.window.focusedWindow()
@@ -236,10 +176,6 @@ function spotify_control(command)
 end
 
 
-function nearly_equal(a, b, epsilon)
-    epsilon = epsilon or 0.0001
-    return math.abs(a - b) < epsilon
-end
 
 function move_window(direction)
     local window = hs.window.focusedWindow()

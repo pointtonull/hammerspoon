@@ -29,4 +29,72 @@ function INFO_TIMER(method_name, log_file)
     info("timer event at %s", os.date("%Y-%m-%d %H:%M:%S"))
 end
 
+--- Truncate a string to a maximum length with optional padding and ellipsis
+-- @param str [string] the string to truncate
+-- @param options [table] optional settings: maxLength (default 80), leftPadd (default 0), elipsis (default "..")
+function truncate(str, options)
+    options = options or {}
+    local maxLength = options.maxLength or 80
+    local leftPadd = options.leftPadd or 0
+    local elipsis = options.elipsis or ".."
+    if #str > maxLength then
+        return str:sub(1, maxLength - #elipsis) .. elipsis
+    elseif #str < leftPadd then
+        return string.rep(" ", leftPadd - #str) .. str
+    end
+    return str
+end
+
+--- Inspect a table or userdata object, printing its contents.
+-- @param obj [table|userdata] the object to inspect
+-- @param options [table] optional settings: indent (default 0), recurse (default true), limit (optional), root (default "root")
+function inspect(obj, options)
+    options = options or {}
+    local indent = options.indent or 0
+    local root = options.root or "root"
+    local recurse = options.recurse == nil and true or false
+    local limit = options.limit
+    local tmp = {}
+    local objType = type(obj)
+    local tbl = nil
+    local function lprint(fmt, ...)
+        hs.printf(string.rep(" ", indent) .. fmt, ...)
+    end
+    if objType == "userdata" then
+        tbl = getmetatable(obj)
+        objType = string.format("%s %s", objType, obj)
+        recurse = false
+    elseif objType == "table" then
+        tbl = obj
+    else
+        lprint("%s: <%s> %s", root, objType, hs.inspect(obj))
+        return
+    end
+    lprint("%s: <%s>", root, objType)
+    for k, v in pairs(tbl) do
+        table.insert(tmp, {key = k, value = v})
+    end
+    table.sort(tmp, function(a, b) return tostring(a.key) < tostring(b.key) end)
+    for i, pair in ipairs(tmp) do
+        if limit and i > limit then
+            lprint("    ..")
+            break
+        end
+        if recurse then
+            inspect(pair.value, {indent = indent + 4, limit = limit and (limit // 2) or nil, root = pair.key})
+        else
+            lprint("    %s: %s", pair.key, pair.value)
+        end
+    end
+end
+
+--- Check approximate equality between two numbers.
+-- @param a [number]
+-- @param b [number]
+-- @param epsilon [number] tolerance (default 0.0001)
+function nearly_equal(a, b, epsilon)
+    epsilon = epsilon or 0.0001
+    return math.abs(a - b) < epsilon
+end
+
 return {}
