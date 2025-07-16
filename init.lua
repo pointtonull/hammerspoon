@@ -1,5 +1,6 @@
 
 require("modules.config")
+require("modules.utils")
 
 OOP_Test = {
     -- __name = USERDATA_TAG .. ".watcher",
@@ -28,172 +29,11 @@ OOP_Test = {
     }
 }
 
-hologram = false
-hologram_mouse = nil
-hologram_brightness = 0
-hologram_canvas = nil
-hologram_caffeinate = nil
-function blackScreen()
-    local screen = hs.screen.mainScreen()
-    local screen_frame = screen:fullFrame()
-    if hologram then
-        -- stop hologram
-        hologram = false
-        hs.caffeinate.set("displayIdle", hologram_caffeinate, false)
-        hs.mouse.absolutePosition(hologram_mouse)
-        hologram_canvas:hide()
-        pcall(function() screen:setBrightness(hologram_brightness) end)
-    else
-        -- start hologram
-        hologram = true
-        hologram_caffeinate = hs.caffeinate.get("displayIdle")
-        hs.caffeinate.set("displayIdle", true, false)
-        hologram_brightness = screen:getBrightness()
-        screen:setBrightness(0)
-        hologram_mouse = hs.mouse.absolutePosition()
-        hs.mouse.absolutePosition({x = screen_frame.w, y = screen_frame.h})
-        if not hologram_canvas then
-            hologram_canvas = CANVAS.new({
-                x = 0,
-                y = 0,
-                w = screen_frame.w,
-                h = screen_frame.h
-            })
-            hologram_canvas:insertElement({
-                type = "rectangle",
-                frame = {x = 0, y = 0, w = screen_frame.w, h = screen_frame.h},
-                fillColor = {red = 0, green = 0, blue = 0, alpha = 1}
-            })
-        end
-        hologram_canvas:show()
-    end
-end
 
-function caffeinate()
-    hs.caffeinate.toggle("displayIdle")
-    if (hs.caffeinate.get("displayIdle")) then
-        hs.alert.show("☕️")
-    else
-        hs.alert.show("🫥")
-    end
-end
 
-function getChar()
-    et = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(event)
-        print(hs.keycodes.map[event:getKeyCode()]);
-        et:stop()
-    end)
-    et:start()
-end
 
-function get_info_logger(local_name, logfile)
-    LOGGER.i(string.format("[%s]", local_name))
-    return function(message, ...)
-        local args = {...}
-        if #args > 0 then
-            message = string.format(message, table.unpack(args))
-        end
-        local formatted_message =
-            string.format("  [%s] %s", local_name, message)
-        LOGGER.i(formatted_message)
-        if logfile then
-            local file = io.open(logfile, "a")
-            if file then
-                file:write(formatted_message .. "\n")
-                file:close()
-            else
-                local formatted_message =
-                    LOGGER.e(string.format("  [%s] %s: %s", local_name,
-                                           LOGGER.e("Error opening file"),
-                                           logfile))
-            end
-        end
-    end
-end
-INFO_TIMER = get_info_logger("timer", "/Users/carlos.cabrera/.messages")
 require("modules.smart").init()
 
-function clock()
-    local screen_frame = hs.screen.mainScreen():fullFrame()
-
-    local canvas = CANVAS.new({
-        x = 0,
-        y = 0,
-        w = screen_frame.w,
-        h = screen_frame.h
-    })
-
-    local time = SHUTIL.shellGet("date '+%y/%m/%d %H:%M'", true)
-    local styled_time = hs.styledtext.new(time, {
-        font = {name = "Monaco", size = 60},
-        strokeWidth = -3,
-        strokeColor = {white = 0},
-        color = {white = 1},
-        paragraphStyle = {alignment = "center"}
-    })
-    local timeSize = canvas:minimumTextSize(styled_time)
-    local styledTimeShadow = styled_time:setStyle({
-        strokeWidth = 0,
-        color = {white = 0, alpha = 0.5}
-    })
-    canvas:insertElement({
-        type = "text",
-        text = styledTimeShadow,
-        frame = {
-            x = screen_frame._w - timeSize.w - 5 + 2 - 5,
-            y = 0 + 5 + 2,
-            w = timeSize.w,
-            h = timeSize.h
-        }
-    })
-    canvas:insertElement({
-        type = "text",
-        text = styled_time,
-        frame = {
-            x = screen_frame._w - timeSize.w - 5 - 5,
-            y = 0 + 5,
-            w = timeSize.w,
-            h = timeSize.h
-        }
-    })
-
-    local meetings = SHUTIL.shellGet("t.meetings_today"):gsub(":: *", "\n")
-    local styled_meetings = hs.styledtext.new(meetings, {
-        font = {name = "Monaco", size = 30},
-        paragraphStyle = {alignment = "left"},
-        strokeWidth = -3,
-        strokeColor = {white = 0},
-        color = {white = 1}
-    })
-    local meetingsSize = canvas:minimumTextSize(styled_meetings)
-    local styledMeetingsShadow = styled_meetings:setStyle({
-        strokeWidth = 0,
-        color = {white = 0, alpha = 0.5}
-    })
-    canvas:insertElement({
-        type = "text",
-        text = styledMeetingsShadow,
-        frame = {
-            x = screen_frame._w - meetingsSize.w - 5 + 2 - 5,
-            y = 0 + 5 + 2 + timeSize.h,
-            w = meetingsSize.w,
-            h = meetingsSize.h
-        }
-    })
-    canvas:insertElement({
-        type = "text",
-        text = styled_meetings,
-        frame = {
-            x = screen_frame._w - meetingsSize.w - 5 - 5,
-            y = 0 + 5 + timeSize.h,
-            w = meetingsSize.w,
-            h = meetingsSize.h
-        }
-    })
-
-    canvas:show()
-    canvas:delete(10)
-end
 
 PASSATA = require("lib.passata")
 PASSATA:init()
@@ -206,63 +46,6 @@ PASSATA.nudge = false
 PASSATA.nagg = false
 PASSATA:start()
 
-function peek_report(alpha)
-    alpha = alpha or 1
-    PASSATA:showReport()
-    PASSATA.canvas_report:alpha(alpha)
-    hs.timer.doAfter(3, function() PASSATA.canvas_report:hide(3) end)
-    clock()
-end
-
-function show_notification_centre()
-    -- TODO
-    -- Control Centre (application) [Application]
-    -- <empty description> (menu bar) [NSAccessibilityMenuExtrasMenuBar]
-    -- Clock (status menu) [NSAccessibilityMockStatusBarltem]
-end
-
-function customizeReport()
-    local screen_frame = hs.screen.mainScreen():fullFrame()
-    local task = SHUTIL.shellGet("t.current"):gsub(": *", "\n")
-    local styledTask = hs.styledtext.new(task, {
-        font = {name = "Monaco", size = 60},
-        strokeWidth = -3,
-        strokeColor = {white = 0},
-        color = PASSATA.colors.report_today,
-        paragraphStyle = {alignment = "center"}
-    })
-    local size = PASSATA.canvas_report:minimumTextSize(styledTask)
-    local styledTaskShadow = styledTask:setStyle({
-        strokeWidth = 0,
-        color = {white = 0, alpha = 0.5}
-    })
-    PASSATA.canvas_report:insertElement({
-        type = "text",
-        text = styledTaskShadow,
-        frame = {
-            x = screen_frame._w // 2 - size.w // 2 + 2,
-            y = screen_frame._h // 2 - size.h // 2 + 2,
-            w = size.w,
-            h = size.h
-        }
-    })
-    PASSATA.canvas_report:insertElement({
-        type = "text",
-        text = styledTask,
-        frame = {
-            x = screen_frame._w // 2 - size.w // 2,
-            y = screen_frame._h // 2 - size.h // 2,
-            w = size.w,
-            h = size.h
-        }
-    })
-end
-
-function gray_minute(time)
-    time = time or 60
-    hs.screen.setForceToGray(true)
-    hs.timer.doAfter(time, function() hs.screen.setForceToGray(false) end)
-end
 PASSATA.triggers["on_complete_work"] = {peek_report}
 -- PASSATA.triggers["on_start_work"] = {
 --     -- function() spoon.Split:assureFocused() end,
@@ -831,117 +614,7 @@ wf_viscosity_error = WF.new(false):setAppFilter('Viscosity')
 wf_viscosity_login:subscribe({WF.windowFocused, WF.windowCreated},
                              viscosity_login)
 
-function safe_show_CopyQ()
-    local currently_focused = safe_get_focused_window()
-    SHUTIL.shellDo("/Applications/CopyQ.app/Contents/MacOS/CopyQ show")
-    function copyq_is_minimized()
-        local is_copyq = hs.application.frontmostApplication():name() == "CopyQ"
-        local no_window = hs.window.focusedWindow() == nil
-        return is_copyq and no_window
-    end
-    function focus_previous_window()
-        return safeWindowFocus(currently_focused)
-    end
-    wait_until(copyq_is_minimized, focus_previous_window, 4 * 60 * 5, 1 / 4)
-end
 
-function wait_until(fn_predicate, fn_callback, fn_else, attempts, interval)
-    args = {fn_else, attempts, interval}
-    fns = {}
-    numbers = {}
-
-    for i = 1, 3 do
-        arg = args[i]
-        if type(arg) == "function" then
-            table.insert(fns, arg)
-        elseif type(arg) == "number" then
-            table.insert(numbers, arg)
-        elseif type(arg) ~= "nil" then
-            print("Unknown argument: " .. arg)
-            return 1
-        end
-    end
-
-    fn_else = fns[1] or function() end
-    attempts = numbers[1] or 10
-    interval = numbers[2] or 1
-
-    local counter
-    local run
-    counter = 0
-    run = true
-    timer = hs.timer.waitUntil(function() -- metapredicate to mixin timeout
-        if attempts <= counter then
-            run = false -- prevent callback from being called
-            return true -- to stop stopwatch
-        end
-        counter = counter + 1
-        return fn_predicate()
-    end, function()
-        if run then
-            fn_callback()
-        else
-            print(fn_callback)
-            print("didn't ran  because of timeout")
-            print("running fn_else")
-            fn_else()
-        end
-    end, interval)
-    return timer
-end
-
-function show_calendar() hs.application.open("Calendar") end
-
-function tickMenu(app, selector, value)
-    local menu_item = app:findMenuItem(selector)
-    local ticked = menu_item["ticked"]
-    if ticked ~= value then local ticked = app:selectMenuItem(selector) end
-end
-
-function align_windows()
-    local current_window = safe_get_focused_window()
-    local current_frame = current_window:frame()
-    local application = current_window:application()
-    local all_windows = application:allWindows()
-    for _, window in ipairs(all_windows) do window:setFrame(current_frame) end
-end
-
-function describe_window(window)
-    if window == nil then window = hs.window.focusedWindow() end
-    print("application: ")
-    print(window:application())
-    print(window:application():name())
-    print("frame: ")
-    print(window:frame())
-    print("id: ")
-    print(window:id())
-    print("isApplication: ")
-    print(window:isApplication())
-    print("isFullScreen: ")
-    print(window:isFullScreen())
-    print("isMaximizable: ")
-    print(window:isMaximizable())
-    print("isStandard: ")
-    print(window:isStandard())
-    print("isVisible: ")
-    print(window:isVisible())
-    print("isWindow: ")
-    print(window:isWindow())
-    print("pid: ")
-    print(window:pid())
-    print("role: ")
-    print(window:role())
-    print("screen: ")
-    print(window:screen())
-    print("selectedText: ")
-    print(window:selectedText())
-    print("size: ")
-    print(window:size())
-    print("subrole: ")
-    print(window:subrole())
-    print("title: ")
-    print(window:title())
-end
 
 function FirefoxCopySource()
     hs.eventtap.keyStroke(HYPER, "l")
@@ -1734,7 +1407,8 @@ function centerWindow(window)
 end
 
 function open_ko_bookmarks()
-    get_winger_window("KO")
+    local w = get_winger_window("KO")
+    bring_or_hide_window(w)
     SHUTIL.shellDo("ff_bookmarks open-ko&", {py_env = "p3"})
 end
 

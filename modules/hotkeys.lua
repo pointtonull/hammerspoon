@@ -14,6 +14,18 @@ HYPER_WINDOW = {"cmd", "shift"} -- window manager controls
 HYPER_RESERVED = {"ctrl", "shift"} -- reserved for in-app configs
 NONE = {}                      -- simple key, without modifiers
 
+-- guard hotkey binds to prevent errors when callbacks are missing
+do
+    local orig_bind = HK.bind
+    function HK.bind(mods, key, pressedfn, releasedfn, repeatfn)
+        if type(pressedfn) ~= "function" then
+            LOGGER.i(string.format("Skipping hotkey for key '%s': no function callback", key))
+            return nil
+        end
+        return orig_bind(mods, key, pressedfn, releasedfn, repeatfn)
+    end
+end
+
 -- Karabiner hacked modifiers
 KARABINER = {
     left_shift   = "s",
@@ -139,6 +151,9 @@ wf_transmission:subscribe(WF.windowUnfocused, function() transmissionModal:exit(
 HK.bind(HYPER, "h", function() hs.eventtap.keyStroke(HYPER_WINDOW, "h") end)
 -- make Firefox cmd+t global
 HK.bind(HYPER_GLOBAL, "t", BROWSER.new_firefox_tab)
+function blackScreen()
+    hs.caffeinate.lockScreen()
+end
 -- easy block screen
 HK.bind(HYPER_GLOBAL, "-", blackScreen)
 
@@ -173,6 +188,9 @@ HK.bind(HYPER_NOPE, KARABINER.right_shift, function()
 end)
 
 -- Caffeine
+function caffeinate()
+    hs.caffeinate.toggle("displayIdle")
+end
 HK.bind(HYPER_WINDOW, "c", caffeinate)
 
 HK.bind(HYPER_WINDOW, "delete", function() spoon.Split:deleteCurrentSplit(true) end)
@@ -230,6 +248,9 @@ end
 -- Clipboard hotkeys
 HK.bind(HYPER_GLOBAL, "e", function() SHUTIL.shellDo("pbedit&") end)
 HK.bind(HYPER_GLOBAL, "w", paste_and_select_next)
+function safe_show_CopyQ()
+    SHUTIL.shellDo("copyq show&")
+end
 HK.bind(HYPER_GLOBAL, "v", safe_show_CopyQ)
 HK.bind(HYPER_GLOBAL, "c", calc_text)
 HK.bind(HYPER_LOCAL, "e", edit_text)
@@ -256,7 +277,11 @@ HK.bind(NONE, "F10", function() music("volumen_down") end)
 HK.bind(NONE, "F11", function() music("volumen_up") end)
 HK.bind({"shift"}, "F10", function() setVolume(-5) end)
 HK.bind({"shift"}, "F11", function() setVolume(2) end)
-HK.bind({"shift"}, "F12", open_ko_bookmarks)
+HK.bind({"shift"}, "F12", function()
+    local w = get_winger_window("KO")
+    bring_or_hide_window(w)
+    SHUTIL.shellDo("ff_bookmarks open-ko&", {py_env = "p3"})
+end)
 HK.bind({"option"}, "Escape", function() spoon.FastModal:start() end)
 HK.bind({"shift"}, "F13", function() todoWindow({set = true}) end)
 HK.bind(NONE, "F13", todoWindow)
