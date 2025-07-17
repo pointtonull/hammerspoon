@@ -1,4 +1,4 @@
--- Hotkey definitions moved out of init.lua
+local OTP = require("modules.otp")
 
 -- PASSATA hotkeys
 local PASSATA = require("lib.passata")
