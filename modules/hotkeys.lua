@@ -2,7 +2,7 @@ local OTP = require("modules.otp")
 
 -- PASSATA hotkeys
 local PASSATA = require("lib.passata")
-local OTP = require("modules.otp")
+PASSATA:bindHotkeys({toggle = {{}, "F12", function() PASSATA:toggle() end}})
 
 -- Clipboard utilities
 local clipboard = require("modules.clipboard")
@@ -13,7 +13,6 @@ local summarize    = clipboard.summarize
 -- Spotify control
 local spotify_mod = require("modules.spotify")
 local spotify_control = spotify_mod.spotify_control
-PASSATA:bindHotkeys({toggle = {{}, "F12", function() PASSATA:toggle() end}})
 
 -- Modifier key constants
 HYPER = {"cmd"}               -- shorthand for CMD
