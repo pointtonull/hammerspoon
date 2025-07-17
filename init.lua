@@ -329,8 +329,7 @@ function async_launch_or_focus(hint, callback)
     wait_until(ready_launched, callback)
 end
 
-function async_get_all_windows(callback, force)
-    -- Simplified to only fetch all windows directly, as spaces are not used
+function async_get_all_windows(callback)
     local all_windows = get_all_windows()
     callback(all_windows)
 end
