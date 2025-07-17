@@ -617,16 +617,9 @@ function async_launch_or_focus(hint, callback)
 end
 
 function async_get_all_windows(callback, force)
-    info = get_info_logger("async_get_all_windows")
-    force = force or false
-    info("with callback: %s", type(callback))
-    if not spaces_explored or force then
-        explore_all_spaces(function() async_get_all_windows(callback) end)
-    else
-        local all_windows = get_all_windows()
-        print("async_get_all_windows::" .. #all_windows)
-        callback(all_windows)
-    end
+    -- Simplified to only fetch all windows directly, as spaces are not used
+    local all_windows = get_all_windows()
+    callback(all_windows)
 end
 
 function async_get_window(window_id, callback, all_windows)
