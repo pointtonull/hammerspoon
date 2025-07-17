@@ -282,12 +282,14 @@ function obj:selectNextWindow()
 
     -- else search for first matching selected in this space
     if not pair then
-        local current_space_id = hs.spaces.focusedSpace()
-        for _, _s in ipairs(self.splits) do
-            if _s.space_id == current_space_id then
-                pair = (current_window_id == _s.focused_id and _s.other or
-                           current_window_id == _s.other_id and _s.focused)
-                break
+        local ok, current_space_id = pcall(function() return hs.spaces.focusedSpace() end)
+        if ok then
+            for _, _s in ipairs(self.splits) do
+                if _s.space_id == current_space_id then
+                    pair = (current_window_id == _s.focused_id and _s.other or
+                               current_window_id == _s.other_id and _s.focused)
+                    break
+                end
             end
         end
     end
