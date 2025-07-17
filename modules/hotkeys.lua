@@ -204,6 +204,8 @@ function caffeinate()
 end
 HK.bind(HYPER_WINDOW, "c", caffeinate)
 
+HK.bind(HYPER_WINDOW, "r", hs.reload)
+
 HK.bind(HYPER_WINDOW, "delete", function() spoon.Split:deleteCurrentSplit(true) end)
 
 HK.bind(HYPER_GLOBAL, "m", function() spoon.EasyMove:start() end)

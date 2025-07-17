@@ -1,5 +1,7 @@
 -- init.lua: Hammerspoon main configuration
 
+hs.alert("🔄")
+
 -- Load global settings and utilities
 require("modules.config")
 require("modules.utils")
@@ -20,7 +22,7 @@ local INSTALL = hs.loadSpoon("SpoonInstall")
 local RB      = hs.loadSpoon("RecursiveBinder")
 
 -- Reload configuration and Commander Spoons
-INSTALL:andUse("ReloadConfiguration", {start = true})
+-- INSTALL:andUse("ReloadConfiguration", {start = true})
 INSTALL:andUse("Commander")
 
 -- Viscosity VPN authentication helpers
