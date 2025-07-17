@@ -54,4 +54,19 @@ function M.init()
     M.wf_error = wf_error
 end
 
+--- Connect to configured Viscosity VPNs
+function M.VPNConnect()
+    hs.osascript.applescript([[
+    tell application "Viscosity" to connect "lan"
+    tell application "Viscosity" to connect "ect"
+    ]])
+end
+
+--- Disconnect all Viscosity VPNs
+function M.VPNDisconnect()
+    hs.osascript.applescript([[
+    tell application "Viscosity" to disconnectall
+    ]])
+end
+
 return M
