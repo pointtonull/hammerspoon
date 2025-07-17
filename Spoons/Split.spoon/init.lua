@@ -284,7 +284,7 @@ function obj:selectNextWindow()
     if not pair then
         local current_space_id = hs.spaces.focusedSpace()
         for _, _s in ipairs(self.splits) do
-            if _s.space_id == current_space then
+            if _s.space_id == current_space_id then
                 pair = (current_window_id == _s.focused_id and _s.other or
                            current_window_id == _s.other_id and _s.focused)
                 break

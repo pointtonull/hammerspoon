@@ -119,4 +119,22 @@ function wait_until(cond_fn, on_success, on_failure, timeout, interval)
     end)
 end
 
+--- Retry a function until it returns a truthy result or a timeout is reached.
+-- @param fn [function] function returning a truthy value when successful
+-- @param timeout [number] optional timeout in seconds (default 5)
+-- @param interval [number] optional polling interval in seconds (default 0.1)
+-- @return the truthy result returned by fn, or nil if timed out
+function retry(fn, timeout, interval)
+    timeout = timeout or 5
+    interval = interval or 0.1
+    local start = hs.timer.secondsSinceEpoch()
+    while hs.timer.secondsSinceEpoch() - start < timeout do
+        local ok, res = pcall(fn)
+        if ok and res then
+            return res
+        end
+        hs.timer.usleep(interval * 1e6)
+    end
+end
+
 return {}

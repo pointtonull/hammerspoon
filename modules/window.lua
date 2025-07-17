@@ -1,16 +1,23 @@
 -- Window management and related utilities moved from init.lua
-
 -- Highlight the focused window briefly
 function show_focused_window()
     local screen = hs.screen.mainScreen():fullFrame()
     local overlay = hs.canvas.new(screen)
     local wframe = hs.window.focusedWindow():frame()
     local border, roundness = 3, 13
-    local frame = { x = wframe._x + 1, y = wframe._y + 1, w = wframe._w - 1, h = wframe._h - 1 }
+    local frame = {
+        x = wframe._x + 1,
+        y = wframe._y + 1,
+        w = wframe._w - 1,
+        h = wframe._h - 1
+    }
     overlay:replaceElements({
-        action = "stroke", type = "rectangle", frame = frame,
-        strokeColor = { red = 1 }, strokeWidth = border,
-        roundedRectRadii = { xRadius = roundness, yRadius = roundness }
+        action = "stroke",
+        type = "rectangle",
+        frame = frame,
+        strokeColor = {red = 1},
+        strokeWidth = border,
+        roundedRectRadii = {xRadius = roundness, yRadius = roundness}
     })
     overlay:show()
     local interval, cycles, count = 0.125, 2, 0
@@ -35,20 +42,30 @@ function move_window(direction)
     local geo
     if direction == "maximize" then
         geo = hs.geometry.rect(0, 0, 1, 1)
-    elseif direction == "down" then geo = hs.geometry.rect(0, 0.5, 1, 0.5)
-    elseif direction == "up" then geo = hs.geometry.rect(0, 0, 1, 0.5)
-    elseif direction == "left" then geo = hs.geometry.rect(0, 0, 0.5, 1)
-    elseif direction == "right" then geo = hs.geometry.rect(0.5, 0, 0.5, 1)
-    else return end
-    local function nearly(a,b,e) e = e or 0.0001; return math.abs(a-b) < e end
+    elseif direction == "down" then
+        geo = hs.geometry.rect(0, 0.5, 1, 0.5)
+    elseif direction == "up" then
+        geo = hs.geometry.rect(0, 0, 1, 0.5)
+    elseif direction == "left" then
+        geo = hs.geometry.rect(0, 0, 0.5, 1)
+    elseif direction == "right" then
+        geo = hs.geometry.rect(0.5, 0, 0.5, 1)
+    else
+        return
+    end
+    local function nearly(a, b, e)
+        e = e or 0.0001;
+        return math.abs(a - b) < e
+    end
     -- Further adjust based on current position/size
     -- (omitted for brevity, retains existing behavior)
-    hs.layout.apply({{ nil, win, screen, geo }})
+    hs.layout.apply({{nil, win, screen, geo}})
 end
 
 -- Close Spotify via AppleScript
 function close_spotify()
-    local info = get_info_logger("close_spotify", "/Users/carlos.cabrera/.messages")
+    local info = get_info_logger("close_spotify",
+                                 "/Users/carlos.cabrera/.messages")
     local script = [[ quit app "Spotify" ]]
     local ok = hs.osascript.applescript(script)
     info("status: %s", tostring(ok))
@@ -96,9 +113,9 @@ end
 function centerWindow(window)
     window = window or hs.window.focusedWindow()
     local screen = hs.screen.mainScreen()
-    local w = (screen:name() == "Built-in Retina Display") and 0.5 or (1/3)
-    local layout = hs.geometry.unitrect((1-w)/2, 0, w, 1)
-    hs.layout.apply({{ nil, window, screen, layout }})
+    local w = (screen:name() == "Built-in Retina Display") and 0.5 or (1 / 3)
+    local layout = hs.geometry.unitrect((1 - w) / 2, 0, w, 1)
+    hs.layout.apply({{nil, window, screen, layout}})
 end
 
 -- Extended window utilities moved from init.lua
@@ -158,9 +175,12 @@ function async_launch_or_focus(hint, callback)
     wait_until(ready_launched, callback)
 end
 
-function async_get_all_windows(callback)
-    callback(get_all_windows())
+function get_all_windows()
+    -- Return all available windows.
+    return hs.window.allWindows()
 end
+
+function async_get_all_windows(callback) callback(get_all_windows()) end
 
 function async_get_window(window_id, callback, all_windows)
     local info = get_info_logger("async_get_window")
@@ -183,7 +203,9 @@ end
 function find_window(args, options)
     options = options or {}
     local fuzzy = options["fuzzy"] or false
-    if type(args.app) == "string" then args.app = hs.application.get(args.app) end
+    if type(args.app) == "string" then
+        args.app = hs.application.get(args.app)
+    end
     if args.window_id then
         if args.app then
             local w = get_app_window(args.app, args.window_id)
@@ -226,7 +248,13 @@ function choose_window(all_windows)
     chooser:searchSubText(true)
     local opts = hs.fnutils.map(all_windows, function(win)
         if win ~= hs.window.focusedWindow() then
-            return { text = win:title(), subText = win:application():title(), image = hs.image.imageFromAppBundle(win:application():bundleID()), window = win }
+            return {
+                text = win:title(),
+                subText = win:application():title(),
+                image = hs.image
+                    .imageFromAppBundle(win:application():bundleID()),
+                window = win
+            }
         end
     end)
     chooser:choices(opts)
@@ -234,17 +262,23 @@ function choose_window(all_windows)
 end
 
 function pickle_window(win)
-    return { id = win:id(), pid = win:pid(), application = win:application():bundleID(), title = win:title() }
+    return {
+        id = win:id(),
+        pid = win:pid(),
+        application = win:application():bundleID(),
+        title = win:title()
+    }
 end
 
 function unpickle_window(attrs)
     for _, win in ipairs(WF.default:getWindows()) do
-        if win:id() == attrs.id and win:pid() == attrs.pid then return win end
-    end
-    for _, win in ipairs(WF.default:getWindows()) do
-        if win:title() == attrs.title and win:application():bundleID() == attrs.application then
+        if win:id() == attrs.id and win:pid() == attrs.pid then
             return win
         end
+    end
+    for _, win in ipairs(WF.default:getWindows()) do
+        if win:title() == attrs.title and win:application():bundleID() ==
+            attrs.application then return win end
     end
 end
 
@@ -260,18 +294,18 @@ function resizeAsCompanion(targetWindow, focusedWindow, options)
     if options.resize then
         if math.max(left, right) < 400 then
             local width = math.max(400, screen.w / 3)
-            targetFrame = { x = screen.w - width, y = 0, w = width, h = screen.h }
+            targetFrame = {x = screen.w - width, y = 0, w = width, h = screen.h}
         elseif left > right then
-            targetFrame = { x = 0, y = 0, w = left, h = screen.h }
+            targetFrame = {x = 0, y = 0, w = left, h = screen.h}
         else
-            targetFrame = { x = screen.w - right, y = 0, w = right, h = screen.h }
+            targetFrame = {x = screen.w - right, y = 0, w = right, h = screen.h}
         end
     else
         local width = targetWindow:frame().w
         if left > right then
-            targetFrame = { x = 0, y = 0, w = width, h = screen.h }
+            targetFrame = {x = 0, y = 0, w = width, h = screen.h}
         else
-            targetFrame = { x = screen.w - width, y = 0, w = width, h = screen.h }
+            targetFrame = {x = screen.w - width, y = 0, w = width, h = screen.h}
         end
     end
     targetWindow:setFrame(targetFrame)
@@ -282,7 +316,8 @@ function get_winger_window(winger_str, ignore_cache)
     ignore_cache = ignore_cache or false
     local info = get_info_logger("get_winger_window")
     info("winger_str: %s", winger_str)
-    if winger_cache[winger_str] and not ignore_cache and winger_cache[winger_str]:isWindow() then
+    if winger_cache[winger_str] and not ignore_cache and
+        winger_cache[winger_str]:isWindow() then
         return winger_cache[winger_str]
     end
     local orig = safe_get_focused_window()
@@ -326,7 +361,9 @@ function bring_window(window, options)
     if fw and window:id() == fw:id() then
         sendBack(window)
     else
-        if companion then resizeAsCompanion(window, nil, { resize = options.resize }) end
+        if companion then
+            resizeAsCompanion(window, nil, {resize = options.resize})
+        end
         safeWindowFocus(window)
     end
     show_focused_window()
@@ -339,7 +376,11 @@ do
     local saved = hs.settings.get("TODO_WINDOW")
     if saved then
         local w = unpickle_window(saved)
-        if w then TODO_WINDOW = w else hs.settings.clear("TODO_WINDOW") end
+        if w then
+            TODO_WINDOW = w
+        else
+            hs.settings.clear("TODO_WINDOW")
+        end
     end
 end
 
@@ -351,7 +392,8 @@ function todoWindow(options)
         show_focused_window()
         TODO_PREV_WINDOW = nil
     else
-        if not TODO_WINDOW then hs.alert("Todo not yet set")
+        if not TODO_WINDOW then
+            hs.alert("Todo not yet set")
         else
             local current = safe_get_focused_window()
             if current:id() == TODO_WINDOW:id() then
@@ -364,7 +406,7 @@ function todoWindow(options)
                 end
             else
                 TODO_PREV_WINDOW = current
-                bring_window(TODO_WINDOW, { companion = true, resize = false })
+                bring_window(TODO_WINDOW, {companion = true, resize = false})
             end
         end
     end
@@ -385,12 +427,16 @@ function select_firefox_window(winger_str)
 end
 
 function safe_get_focused_window()
-    local success, result = pcall(function()
+    success, result = pcall(function()
         return retry(function()
             return hs.window.focusedWindow() or hs.window.frontmostWindow()
         end)
     end)
-    if success then return result end
+    if success then
+        return result
+    else
+        print("error")
+    end
 end
 
 function safeWindowFocus(window)
@@ -406,7 +452,9 @@ end
 function safeGotoSpace(space_id)
     local success, result = pcall(function()
         return retry(function()
-            if SPACES.focusedSpace() ~= space_id then SPACES.gotoSpace(space_id) end
+            if SPACES.focusedSpace() ~= space_id then
+                SPACES.gotoSpace(space_id)
+            end
             return SPACES.focusedSpace() == space_id or nil
         end)
     end)
