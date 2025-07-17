@@ -97,4 +97,26 @@ function nearly_equal(a, b, epsilon)
     return math.abs(a - b) < epsilon
 end
 
+--- Wait until a condition is met, then invoke callbacks.
+-- @param cond_fn [function] predicate returning truthy when the condition is satisfied
+-- @param on_success [function] function to call once cond_fn() is truthy
+-- @param on_failure [function] optional, function to call if timeout is reached before success
+-- @param timeout [number] optional timeout in seconds (default 5)
+-- @param interval [number] optional polling interval in seconds (default 0.1)
+function wait_until(cond_fn, on_success, on_failure, timeout, interval)
+    timeout = timeout or 5
+    interval = interval or 0.1
+    local start = hs.timer.secondsSinceEpoch()
+    local timer
+    timer = hs.timer.doEvery(interval, function()
+        if cond_fn() then
+            timer:stop()
+            if on_success then on_success() end
+        elseif hs.timer.secondsSinceEpoch() - start >= timeout then
+            timer:stop()
+            if on_failure then on_failure() end
+        end
+    end)
+end
+
 return {}
