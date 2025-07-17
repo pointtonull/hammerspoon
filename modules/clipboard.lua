@@ -1,4 +1,6 @@
 -- Clipboard and editing utilities moved from init.lua
+SHUTIL = require("lib.shutil")
+
 local M = {}
 
 --- Open the current clipboard text in editor, then restore selection
