@@ -46,50 +46,6 @@ RB = hs.loadSpoon("RecursiveBinder")
 INSTALL:andUse("ReloadConfiguration", {start = true})
 INSTALL:andUse("Commander")
 
-function show_focused_window()
-    local screen = hs.screen.mainScreen():fullFrame()
-    local overlay = hs.canvas.new(screen)
-    local wframe = hs.window.focusedWindow():frame()
-    border = 3
-    roundness = 13
-    frame = {
-        x = wframe._x + 1,
-        y = wframe._y + 1,
-        w = wframe._w - 1,
-        h = wframe._h - 1
-    }
-    overlay:replaceElements({
-        action = "stroke",
-        type = "rectangle",
-        frame = frame,
-        strokeColor = {red = 1},
-        strokeWidth = border,
-        roundedRectRadii = {xRadius = roundness, yRadius = roundness}
-    })
-    overlay:show()
-
-    local intervalDuration = 0.125
-    local cycles = 2
-    local cycled = 0
-    local handler_timer
-
-    local function handler()
-        cycled = cycled + 1
-        if cycled <= cycles then
-            if overlay:isShowing() then
-                overlay:hide()
-            else
-                overlay:show()
-            end
-        else
-            overlay:hide(1)
-            handler_timer:stop()
-        end
-    end
-
-    handler_timer = hs.timer.doEvery(intervalDuration, handler, true)
-    return true
-end
 
 -- repo - repository from where the Spoon should be installed if not present in
 --   the system, as defined in SpoonInstall.repos. Defaults to "default".
@@ -107,145 +63,12 @@ end
 --   everything else.
 
 
-function edit_text()
-    local original = hs.window.focusedWindow()
-    hs.eventtap.keyStroke(HYPER, "a")
-    hs.eventtap.keyStroke(HYPER, "c")
-    input_pause()
-    function pbedit()
-        print("pbedit()")
-        cmd = "/Users/carlos.cabrera/bin/pbedit"
-        task = hs.task.new(cmd, cleanup)
-        task:start()
-        wait_until(ready_editor, on_editor, cleanup)
-    end
-    function ready_editor()
-        print("ready_editor()")
-        local focused_window = hs.window.focusedWindow()
-        if focused_window then return focused_window:title() == "nvim" end
-    end
-    function on_editor()
-        print("on_editor()")
-        local window = hs.window.focusedWindow()
-        window:setFrame(original:frame())
-    end
-    function cleanup()
-        print("cleanup()")
-        original:focus()
-        hs.eventtap.keyStroke(HYPER, "a")
-        hs.eventtap.keyStroke(HYPER, "v")
-    end
-    pbedit()
-end
-
-function calc_text()
-    hs.eventtap.keyStroke(HYPER, "a")
-    hs.eventtap.keyStroke(HYPER, "c")
-    input_pause()
-    cmd = "pbpaste | bc -S 2"
-    local result = SHUTIL.shellGet(cmd)
-    hs.eventtap.keyStrokes(result)
-end
-
-function spotify_control(command)
-    local cmd = "s.log spotify_control " .. command .. "&"
-    SHUTIL.shellDo(cmd, {py_env = "p3"})
-end
 
 
 
-function move_window(direction)
-    local window = hs.window.focusedWindow()
-    local screen = window:screen()
-    local app = window:application()
-    local disableList = {
-        ["Firefox"] = true,
-        ["Tor Browser"] = true,
-        ["Zen"] = true
-    }
-    if disableList[app:name()] then
-        hs.axuielement.applicationElement(app).AXEnhancedUserInterface = false
-    end
-    local window_frame = window:frame()
-    local screen_frame = screen:frame()
-    -- print("screen_frame: " .. hs.inspect(screen_frame))
-    -- print("window_frame: " .. hs.inspect(window_frame))
-    local new_geometry = nil
 
-    if direction == "maximize" then
-        new_geometry = hs.geometry.rect(0, 0, 1, 1)
-    elseif direction == "down" then
-        new_geometry = hs.geometry.rect(0.0, 0.5, 1, 0.5)
-    elseif direction == "up" then
-        new_geometry = hs.geometry.rect(0.0, 0.0, 1, 0.5)
-    elseif direction == "left" then
-        new_geometry = hs.geometry.rect(0.0, 0.0, 0.5, 1)
-    elseif direction == "right" then
-        new_geometry = hs.geometry.rect(0.5, 0.0, 0.5, 1)
-    else
-        print("unknown direction: " .. direction)
-        return
-    end
 
-    local is_tall = window_frame._h > screen_frame._h / 2
-    local is_bottom = nearly_equal(window_frame._y + window_frame._h,
-                                   screen_frame._h, 1)
-    local is_top = window_frame._y <= 0
-    local is_left = window_frame._x <= 0
-    local is_right = nearly_equal(window_frame._x + window_frame._w,
-                                  screen_frame._w, 2)
 
-    if direction == "up" or direction == "down" then
-        if not is_tall then
-            if direction == "down" and not is_bottom then
-                print("make it bottom")
-            elseif direction == "up" and not is_top then
-                print("make it top")
-            elseif is_left and is_right then
-                print("make left corner")
-                new_geometry.w = 0.5
-            elseif is_left then
-                print("make right corner")
-                new_geometry.x = 0.5
-                new_geometry.w = 0.5
-            elseif is_right then
-                print("make wide")
-            else
-                print("something went wrong")
-            end
-        end
-    elseif direction == "left" or direction == "right" then
-        if not is_tall then
-            print("make it tall")
-        elseif direction == "left" and not is_left then
-            print("make it left")
-        elseif direction == "right" and not is_right then
-            print("make it right")
-        elseif nearly_equal(window_frame._w, screen_frame._w * 1 / 2, 1) then
-            print("if it's 1/2, make it 2/3")
-            new_geometry.w = 2 / 3
-            new_geometry.x = new_geometry.x * 2 / 3
-        elseif nearly_equal(window_frame._w, screen_frame._w * 2 / 3, 1) then
-            print("if it's 2/3, make it 1/3")
-            new_geometry.w = 1 / 3
-            new_geometry.x = new_geometry.x * 4 / 3
-        else
-            print("if it's 1/3, make it 1/2")
-        end
-    end
-
-    hs.layout.apply({{nil, window, screen, new_geometry}})
-end
-
-function close_spotify()
-    local info = get_info_logger("close_spotify",
-                                 "/Users/carlos.cabrera/.messages")
-    local script = [[
-        quit app "Spotify"
-    ]]
-    local ok, _, _, _ = hs.osascript.applescript(script)
-    info("status: " .. tostring(ok))
-end
 
 -- function maybe_close_spotify()
 --     local info = get_info_logger("maybe_close_spotify",
@@ -272,66 +95,11 @@ end
 --     maybe_close_spotify()
 -- end, true)
 
-function input_pause(seconds)
-    seconds = seconds or 0.4
-    local delay = seconds * 1e6
-    -- this is not elegant but I could not find an easier way to way for the
-    -- input client to be ready
-    hs.timer.usleep(delay)
-end
 
-function paste_and_select_next()
-    hs.eventtap.keyStroke(HYPER, "v")
-    input_pause()
-    hs.eventtap.keyStroke(HYPER_NOPE, "w")
-end
 
-function focus_app(app)
-    local app_name
-    if type(app) == "string" then
-        app_name = app
-        app = nil
-    else
-        app_name = app:name()
-    end
-    local current_space_windows = WF.new(app_name):setCurrentSpace(true)
-                                      :getWindows()
-    if #current_space_windows > 0 then
-        result = current_space_windows[1]:focus()
-        return result
-    end
-    if not app then app = hs.application.get(app_name) end
-    if app then
-        app:activate()
-    else
-        hs.application.launchOrFocus(app_name)
-    end
-    return app
-end
 
-function summarize()
-    -- show_focused_window()
-    hs.alert("🧠 Reading...")
-    hs.eventtap.keyStroke(HYPER, "c")
-    SHUTIL.shellDo("s.say_summarize&", {py_env = "p3"})
-end
 
-function focus_and_show(hint)
-    -- hs.application:activate()
-    focus_app(hint)
-    local wf_hint = WF.new({hint})
-    local window = wf_hint:getWindows()[1]
-    local firstSpace = SPACES.windowSpaces(window)[1]
-    SPACES.gotoSpace(firstSpace)
-    focus_app(hint)
-end
 
-function focusIterm()
-    focus_app("iTerm")
-    SPACES.toggleAppExpose()
-    input_pause()
-    hs.eventtap.keyStroke(NONE, "Right")
-end
 
 
 -- wf_dvsa = WF.new(false):setAppFilter("Google Chrome")
@@ -482,7 +250,11 @@ end
 -- Viscosity authentication moved to modules/viscosity.lua
 require("modules.viscosity").init()
 -- window management functions moved to modules/window.lua
-require("modules.window")
+	require("modules.window")
+
+	get_aws_credentials = AWS.get_aws_credentials
+	export_mails = AWS.export_mails
+	export_calendar = AWS.export_calendar
 
 function FirefoxCopySource()
     hs.eventtap.keyStroke(HYPER, "l")
@@ -1232,18 +1004,6 @@ function VPNDisconnect()
     ]])
 end
 
-function centerWindow(window)
-    window = window or hs.window.focusedWindow()
-    local screen = hs.screen.mainScreen()
-
-    if screen:name() == "Built-in Retina Display" then
-        width = 0.5
-    else
-        width = 1 / 3
-    end
-    local layout = hs.geometry.unitrect((1 - width) / 2, 0, width, 1)
-    hs.layout.apply({{nil, window, screen, layout, 0, 0}})
-end
 
 function open_ko_bookmarks()
     local w = get_winger_window("KO")

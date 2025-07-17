@@ -3,6 +3,16 @@
 -- PASSATA hotkeys
 local PASSATA = require("lib.passata")
 local OTP = require("modules.otp")
+
+-- Clipboard utilities
+local clipboard = require("modules.clipboard")
+local edit_text    = clipboard.edit_text
+local calc_text    = clipboard.calc_text
+local summarize    = clipboard.summarize
+
+-- Spotify control
+local spotify_mod = require("modules.spotify")
+local spotify_control = spotify_mod.spotify_control
 PASSATA:bindHotkeys({toggle = {{}, "F12", function() PASSATA:toggle() end}})
 
 -- Modifier key constants
