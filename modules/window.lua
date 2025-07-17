@@ -118,7 +118,13 @@ function centerWindow(window)
     hs.layout.apply({{nil, window, screen, layout}})
 end
 
--- Extended window utilities moved from init.lua
+function align_windows()
+    local current_window = safe_get_focused_window()
+    local current_frame = current_window:frame()
+    local application = current_window:application()
+    local all_windows = application:allWindows()
+    for _, window in ipairs(all_windows) do window:setFrame(current_frame) end
+end
 
 function explore_all_spaces(callback)
     local info = get_info_logger("explore_all_spaces")
@@ -411,6 +417,8 @@ function todoWindow(options)
         end
     end
 end
+
+function show_calendar() focus_app("Calendar") end
 
 function show_teams(selector)
     focus_app("Microsoft Teams")
