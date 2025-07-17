@@ -551,22 +551,24 @@ end
 
 function bring_window(window, options)
     options = options or {}
-    companion = options.companion or false
+    local companion = options.companion or false
     if options.resize == nil then options.resize = true end
     local focusedWindow = hs.window.focusedWindow()
-    if window ~= focusedWindow then
+    local result
+    if focusedWindow and window:id() == focusedWindow:id() then
+        sendBack(window)
+    else
         if companion then
             resizeAsCompanion(window, nil, {resize = options.resize})
         end
         result = safeWindowFocus(window)
-    else
-        sendBack(window)
     end
     show_focused_window()
     return result
 end
 
 TODO_WINDOW = nil
+TODO_PREV_WINDOW = nil
 
 -- Restore persistent TODO window after config reload
 do
@@ -582,16 +584,28 @@ do
 end
 function todoWindow(options)
     options = options or {}
-    local set = options.set
-    if set then
+    if options.set then
         TODO_WINDOW = safe_get_focused_window()
         hs.settings.set("TODO_WINDOW", pickle_window(TODO_WINDOW))
         show_focused_window()
+        TODO_PREV_WINDOW = nil
     else
         if not TODO_WINDOW then
             hs.alert("Todo not yet set")
         else
-            bring_window(TODO_WINDOW, {companion = true, resize = false})
+            local current = safe_get_focused_window()
+            if current:id() == TODO_WINDOW:id() then
+                if TODO_PREV_WINDOW and TODO_PREV_WINDOW:isWindow() then
+                    safeWindowFocus(TODO_PREV_WINDOW)
+                    TODO_PREV_WINDOW = nil
+                    show_focused_window()
+                else
+                    sendBack(TODO_WINDOW)
+                end
+            else
+                TODO_PREV_WINDOW = current
+                bring_window(TODO_WINDOW, {companion = true, resize = false})
+            end
         end
     end
 end
