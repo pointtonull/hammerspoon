@@ -16,7 +16,9 @@ _G.peek_report = peek_report
 
 -- Stub for grayscale reminder (on_nagg trigger)
 local function gray_minute()
-    -- TODO: implement grayscale reminder
+    time = time or 60
+    hs.screen.setForceToGray(true)
+    hs.timer.doAfter(time, function() hs.screen.setForceToGray(false) end)
 end
 _G.gray_minute = gray_minute
 
