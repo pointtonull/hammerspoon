@@ -32,7 +32,7 @@ function clock()
         h = screen_frame.h
     })
 
-    local time = SHUTIL.shellGet("date '+%y/%m/%d %H:%M'", true)
+    local time = os.date("%a %d %b %Y %H:%M")
     local styled_time = hs.styledtext.new(time, {
         font = {name = "Monaco", size = 60},
         strokeWidth = -3,
