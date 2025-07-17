@@ -36,30 +36,86 @@ end
 
 -- Move or resize the focused window in a given direction
 function move_window(direction)
-    local win = hs.window.focusedWindow()
-    local screen = win:screen():frame()
-    local wf = win:frame()
-    local geo
+    local window = hs.window.focusedWindow()
+    local screen = window:screen()
+    local app = window:application()
+    local disableList = {
+        ["Firefox"] = true,
+        ["Tor Browser"] = true,
+        ["Zen"] = true
+    }
+    if disableList[app:name()] then
+        hs.axuielement.applicationElement(app).AXEnhancedUserInterface = false
+    end
+    local window_frame = window:frame()
+    local screen_frame = screen:frame()
+    -- print("screen_frame: " .. hs.inspect(screen_frame))
+    -- print("window_frame: " .. hs.inspect(window_frame))
+    local new_geometry = nil
+
     if direction == "maximize" then
-        geo = hs.geometry.rect(0, 0, 1, 1)
+        new_geometry = hs.geometry.rect(0, 0, 1, 1)
     elseif direction == "down" then
-        geo = hs.geometry.rect(0, 0.5, 1, 0.5)
+        new_geometry = hs.geometry.rect(0.0, 0.5, 1, 0.5)
     elseif direction == "up" then
-        geo = hs.geometry.rect(0, 0, 1, 0.5)
+        new_geometry = hs.geometry.rect(0.0, 0.0, 1, 0.5)
     elseif direction == "left" then
-        geo = hs.geometry.rect(0, 0, 0.5, 1)
+        new_geometry = hs.geometry.rect(0.0, 0.0, 0.5, 1)
     elseif direction == "right" then
-        geo = hs.geometry.rect(0.5, 0, 0.5, 1)
+        new_geometry = hs.geometry.rect(0.5, 0.0, 0.5, 1)
     else
+        print("unknown direction: " .. direction)
         return
     end
-    local function nearly(a, b, e)
-        e = e or 0.0001;
-        return math.abs(a - b) < e
+
+    local is_tall = window_frame._h > screen_frame._h / 2
+    local is_bottom = nearly_equal(window_frame._y + window_frame._h,
+                                   screen_frame._h, 1)
+    local is_top = window_frame._y <= 0
+    local is_left = window_frame._x <= 0
+    local is_right = nearly_equal(window_frame._x + window_frame._w,
+                                  screen_frame._w, 2)
+
+    if direction == "up" or direction == "down" then
+        if not is_tall then
+            if direction == "down" and not is_bottom then
+                print("make it bottom")
+            elseif direction == "up" and not is_top then
+                print("make it top")
+            elseif is_left and is_right then
+                print("make left corner")
+                new_geometry.w = 0.5
+            elseif is_left then
+                print("make right corner")
+                new_geometry.x = 0.5
+                new_geometry.w = 0.5
+            elseif is_right then
+                print("make wide")
+            else
+                print("something went wrong")
+            end
+        end
+    elseif direction == "left" or direction == "right" then
+        if not is_tall then
+            print("make it tall")
+        elseif direction == "left" and not is_left then
+            print("make it left")
+        elseif direction == "right" and not is_right then
+            print("make it right")
+        elseif nearly_equal(window_frame._w, screen_frame._w * 1 / 2, 1) then
+            print("if it's 1/2, make it 2/3")
+            new_geometry.w = 2 / 3
+            new_geometry.x = new_geometry.x * 2 / 3
+        elseif nearly_equal(window_frame._w, screen_frame._w * 2 / 3, 1) then
+            print("if it's 2/3, make it 1/3")
+            new_geometry.w = 1 / 3
+            new_geometry.x = new_geometry.x * 4 / 3
+        else
+            print("if it's 1/3, make it 1/2")
+        end
     end
-    -- Further adjust based on current position/size
-    -- (omitted for brevity, retains existing behavior)
-    hs.layout.apply({{nil, win, screen, geo}})
+
+    hs.layout.apply({{nil, window, screen, new_geometry}})
 end
 
 -- Close Spotify via AppleScript
