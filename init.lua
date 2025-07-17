@@ -567,11 +567,25 @@ function bring_window(window, options)
 end
 
 TODO_WINDOW = nil
+
+-- Restore persistent TODO window after config reload
+do
+  local saved = hs.settings.get("TODO_WINDOW")
+  if saved then
+    local w = unpickle_window(saved)
+    if w then
+      TODO_WINDOW = w
+    else
+      hs.settings.clear("TODO_WINDOW")
+    end
+  end
+end
 function todoWindow(options)
     options = options or {}
     local set = options.set
     if set then
         TODO_WINDOW = safe_get_focused_window()
+        hs.settings.set("TODO_WINDOW", pickle_window(TODO_WINDOW))
         show_focused_window()
     else
         if not TODO_WINDOW then
